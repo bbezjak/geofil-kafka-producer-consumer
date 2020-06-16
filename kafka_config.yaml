@@ -1,0 +1,15 @@
+producerBroker: "localhost:9092"
+#producerBroker: "10.19.8.217:9092"
+producerTopic: geofil-data
+fromHdfs: true
+producerSourceFilePath: data/publications19.json
+
+consumerAppId: storm-kafka-consumer
+consumerClientId: storm-kafka-consumer-client
+consumerBroker: "localhost:9092"
+#consumerBroker: "10.19.8.217:9092"
+consumerTopic: geofil-data-storm
+consumerDestinationFilePath: test.txt
+
+#decimals for Geometry transformation, do not modify
+decimals: 19
