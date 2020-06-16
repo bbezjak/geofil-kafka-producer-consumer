@@ -2,6 +2,7 @@ package kafka;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
+
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
@@ -23,8 +24,6 @@ import java.util.function.Function;
 import java.util.stream.Stream;
 public class PublicationsProducer {
 
-//    public static final String topicName = "geofil_publications";
-    public static final String topicName = "geofil_results"; // testing
     public static AtomicInteger seq = new AtomicInteger(0);
 
     public static void main(String args[]) throws IOException, URISyntaxException {
@@ -36,8 +35,8 @@ public class PublicationsProducer {
         //Stream<String> lines = Files.lines(Paths.get("publications19.json"));
         Stream<String> lines;
 
-        if(kafkaConfig.isFromHdfs()) {
-            System.out.println("Reading from local " + kafkaConfig.getProducerSourceFilePath());
+        System.out.println("Reading from local " + kafkaConfig.getProducerSourceFilePath());
+        if(!kafkaConfig.isFromHdfs()) {
             lines = Files.lines(Paths.get(kafkaConfig.getProducerSourceFilePath()));
         } else {
             System.out.println("Reading from hdfs " + kafkaConfig.getProducerSourceFilePath());
@@ -45,7 +44,7 @@ public class PublicationsProducer {
             conf.addResource(new org.apache.hadoop.fs.Path("/etc/hadoop/conf/core-site.xml"));
             conf.addResource(new org.apache.hadoop.fs.Path("/etc/hadoop/conf/hdfs-site.xml"));
             FileSystem hdfs = FileSystem.get(new URI("hdfs://10.19.8.199:8020"), conf);
-            org.apache.hadoop.fs.Path path=new org.apache.hadoop.fs.Path(args[0]);
+            org.apache.hadoop.fs.Path path=new org.apache.hadoop.fs.Path(kafkaConfig.getProducerSourceFilePath());
             BufferedReader br = new BufferedReader(new InputStreamReader(hdfs.open(path)));
             List<String> readLines = new LinkedList<>();
             try {
@@ -64,8 +63,11 @@ public class PublicationsProducer {
             }
         }
 
+        //    String topicName = "geofil_publications";
+        String topicName = kafkaConfig.getProducerTopic(); // testing --> geofil_results
+
         Properties props = new Properties();
-        props.put("bootstrap.servers", "10.19.8.217:9092");
+        props.put("bootstrap.servers", kafkaConfig.getProducerBroker());
         props.put("acks", "all");
         props.put("retries", 0);
         props.put("key.serializer", StringSerializer.class);

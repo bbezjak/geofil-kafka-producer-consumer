@@ -7,7 +7,6 @@ import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.kstream.*;
-import org.geotools.geojson.geom.GeometryJSON;
 import utils.KafkaConfig;
 
 import java.io.FileWriter;
@@ -16,12 +15,10 @@ import java.util.Properties;
 
 public class PublicationsConsumer {
 
-    private static int decimals = 19;
-
     public static void main(String args[]) throws IOException {
 
         KafkaConfig kafkaConfig = KafkaConfig.create(args[0]);
-        final KafkaStreams streams = createStreams("10.19.8.217:9092", "/tmp/kafka-streams");
+        final KafkaStreams streams = createStreams(kafkaConfig.getConsumerBroker(), "/tmp/kafka-streams", kafkaConfig);
 
         streams.cleanUp();
 
@@ -32,12 +29,13 @@ public class PublicationsConsumer {
     }
 
     private static KafkaStreams createStreams(final String bootstrapServers,
-                                              final String stateDir) {
+                                              final String stateDir,
+                                              KafkaConfig kafkaConfig) {
 
         final Properties streamsConfiguration = new Properties();
         // unique app id on kafka cluster
-        streamsConfiguration.put(StreamsConfig.APPLICATION_ID_CONFIG, "geofill-data-storm.util.testing");
-        streamsConfiguration.put(StreamsConfig.CLIENT_ID_CONFIG, "cgeofill-data-storm.util.testing-client");
+        streamsConfiguration.put(StreamsConfig.APPLICATION_ID_CONFIG, kafkaConfig.getConsumerAppId());
+        streamsConfiguration.put(StreamsConfig.CLIENT_ID_CONFIG, kafkaConfig.getConsumerClientId());
         // kafka broker address
         streamsConfiguration.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
         // local state store
@@ -49,15 +47,14 @@ public class PublicationsConsumer {
         streamsConfiguration.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName());
 
         StreamsBuilder builder = new StreamsBuilder();
+        String topic = kafkaConfig.getConsumerTopic();
 
         // Get the stream of station statuses
-        GeometryJSON gj = new GeometryJSON(decimals);
-        KStream<String, String> geometryStream = builder.stream(
-                "geofil_results",
+        KStream<String, String> geometryStream =
+                builder.stream(topic,
                 Consumed.with(Serdes.String(), Serdes.String()))
                 .map((geometry_id, stringValue) -> {
                     try {
-                        //Geometry geometry = gj.read(stringValue);
                         return new KeyValue<>(geometry_id, stringValue);
                     } catch (Exception e) {
                         throw new RuntimeException("Deserialize error" + e);
@@ -66,7 +63,7 @@ public class PublicationsConsumer {
 
         FileWriter fw = null;
         try {
-            fw = new FileWriter("tesko_testić_2.txt", true);
+            fw = new FileWriter(kafkaConfig.getConsumerDestinationFilePath(), true);
         } catch (IOException e) {
             e.printStackTrace();
         }

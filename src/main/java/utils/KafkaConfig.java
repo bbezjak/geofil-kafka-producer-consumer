@@ -21,20 +21,18 @@ public class KafkaConfig {
     private String consumerBroker;
     private String consumerTopic;
     private String consumerDestinationFilePath;
-    private int decimals;
 
-    public static KafkaConfig create(String directory) throws IOException {
+    public static KafkaConfig create(String path) throws IOException {
 
-        String path = directory + File.separator + "kafka_config.yaml";
         System.out.println("Reading config from " + path);
         File config = Paths.get(path).toFile();
 
         ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
-        KafkaConfig topologyConfig = mapper.readValue(config, KafkaConfig.class);
+        KafkaConfig kafkaConfig = mapper.readValue(config, KafkaConfig.class);
 
         System.out.println("Used configuration:");
-        System.out.println(topologyConfig.toString());
-        return topologyConfig;
+        System.out.println(kafkaConfig.toString());
+        return kafkaConfig;
     }
 
     public String getProducerBroker() {
@@ -109,11 +107,18 @@ public class KafkaConfig {
         this.consumerDestinationFilePath = consumerDestinationFilePath;
     }
 
-    public int getDecimals() {
-        return decimals;
-    }
-
-    public void setDecimals(int decimals) {
-        this.decimals = decimals;
+    @Override
+    public String toString() {
+        return "KafkaConfig{" +
+                "producerBroker='" + producerBroker + '\'' +
+                ", producerTopic='" + producerTopic + '\'' +
+                ", fromHdfs=" + fromHdfs +
+                ", producerSourceFilePath='" + producerSourceFilePath + '\'' +
+                ", consumerAppId='" + consumerAppId + '\'' +
+                ", consumerClientId='" + consumerClientId + '\'' +
+                ", consumerBroker='" + consumerBroker + '\'' +
+                ", consumerTopic='" + consumerTopic + '\'' +
+                ", consumerDestinationFilePath='" + consumerDestinationFilePath + '\'' +
+                '}';
     }
 }
