@@ -35,8 +35,8 @@ public class PublicationsProducer {
         //Stream<String> lines = Files.lines(Paths.get("publications19.json"));
         Stream<String> lines;
 
-        System.out.println("Reading from local " + kafkaConfig.getProducerSourceFilePath());
         if(!kafkaConfig.isFromHdfs()) {
+            System.out.println("Reading from local " + kafkaConfig.getProducerSourceFilePath());
             lines = Files.lines(Paths.get(kafkaConfig.getProducerSourceFilePath()));
         } else {
             System.out.println("Reading from hdfs " + kafkaConfig.getProducerSourceFilePath());
