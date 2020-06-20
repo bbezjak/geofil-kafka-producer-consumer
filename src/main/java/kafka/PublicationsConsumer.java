@@ -83,7 +83,8 @@ public class PublicationsConsumer {
             @Override
             public void apply(String s, String s2) {
                 try {
-                    finalFw.append(s + ": Geometry " + s2 + "\n");
+                    //finalFw.append(s + ": Geometry " + s2 + "\n");
+                    finalFw.append(s + ": Avg time " + s2 + "\n");
                     System.out.println(s);
                 } catch (IOException e) {
                     e.printStackTrace();
