@@ -18,19 +18,31 @@ public class PublicationsConsumer {
     public static void main(String args[]) throws IOException {
 
         KafkaConfig kafkaConfig = KafkaConfig.create(args[0]);
-        final KafkaStreams streams = createStreams(kafkaConfig.getConsumerBroker(), "/tmp/kafka-streams", kafkaConfig);
+
+        FileWriter fw = new FileWriter(kafkaConfig.getConsumerDestinationFilePath(), true);
+
+        final KafkaStreams streams = createStreams(kafkaConfig.getConsumerBroker(), "/tmp/kafka-streams", kafkaConfig, fw);
 
         streams.cleanUp();
-
         streams.start();
 
         // Add shutdown hook to respond to SIGTERM and gracefully close Kafka Streams
-        Runtime.getRuntime().addShutdownHook(new Thread(streams::close));
+        FileWriter finalFw = fw;
+        Runtime.getRuntime().addShutdownHook(new Thread( () -> {
+            try {
+                finalFw.flush();
+                finalFw.close();
+                streams.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }));
     }
 
     private static KafkaStreams createStreams(final String bootstrapServers,
                                               final String stateDir,
-                                              KafkaConfig kafkaConfig) {
+                                              KafkaConfig kafkaConfig,
+                                              FileWriter fw) {
 
         final Properties streamsConfiguration = new Properties();
         // unique app id on kafka cluster
@@ -61,7 +73,6 @@ public class PublicationsConsumer {
                     }
                 });
 
-        FileWriter fw = null;
         try {
             fw = new FileWriter(kafkaConfig.getConsumerDestinationFilePath(), true);
         } catch (IOException e) {
