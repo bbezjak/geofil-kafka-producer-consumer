@@ -9,6 +9,7 @@ import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.kstream.*;
 import utils.KafkaConfig;
 
+import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Properties;
@@ -19,7 +20,11 @@ public class PublicationsConsumer {
 
         KafkaConfig kafkaConfig = KafkaConfig.create(args[0]);
 
-        FileWriter fw = new FileWriter(kafkaConfig.getConsumerDestinationFilePath(), true);
+        File file = new File(kafkaConfig.getConsumerDestinationFilePath());
+        if(file.exists() && !file.isDirectory()) {
+            throw new RuntimeException("File " + file.getName() + " already exists");
+        }
+        FileWriter fw = new FileWriter(file.getName(), true);
 
         final KafkaStreams streams = createStreams(kafkaConfig.getConsumerBroker(), "/tmp/kafka-streams", kafkaConfig, fw);
 
@@ -83,7 +88,7 @@ public class PublicationsConsumer {
             @Override
             public void apply(String s, String s2) {
                 try {
-                    finalFw.append(s + ": Geometry " + s2 + "\n");
+                    finalFw.append(s + ": avgProcTime " + s2 + "\n");
                     System.out.println(s);
                 } catch (IOException e) {
                     e.printStackTrace();
