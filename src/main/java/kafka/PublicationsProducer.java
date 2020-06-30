@@ -25,6 +25,7 @@ import java.util.stream.Stream;
 public class PublicationsProducer {
 
     public static AtomicInteger seq = new AtomicInteger(0);
+    private static int markProgressCounter = 1;
 
     public static void main(String args[]) throws IOException, URISyntaxException {
         //arg[0] --> HDFS path.....
@@ -88,14 +89,15 @@ public class PublicationsProducer {
 //                throw new RuntimeException(e.getMessage());
 //            }
 //        });
-
-        AtomicInteger counter = new AtomicInteger();
+        System.out.println("Kafka started sending data");
         lines.forEach(line -> {
             try {
                 int id = seq.incrementAndGet();
                 ProducerRecord<String, String> record = new ProducerRecord<>(topicName, String.valueOf(id), line);
                 producer.send(record);
-                System.out.println("Sent " + counter.getAndIncrement());
+                if(id % markProgressCounter == 0) {
+                    System.out.println("Sent " + seq.get());
+                }
             } catch (Exception e) {
                 System.out.println("Failed to serialize");
                 throw new RuntimeException(e.getMessage());

@@ -19,8 +19,12 @@ public class PublicationsConsumer {
     public static void main(String args[]) throws IOException {
 
         KafkaConfig kafkaConfig = KafkaConfig.create(args[0]);
+        String fileName = kafkaConfig.getConsumerDestinationFilePath();
+        if(args.length == 2) {
+            fileName = args[1];
+        }
 
-        File file = new File(kafkaConfig.getConsumerDestinationFilePath());
+        File file = new File(fileName);
         if(file.exists() && !file.isDirectory()) {
             throw new RuntimeException("File " + file.getName() + " already exists");
         }
@@ -32,11 +36,10 @@ public class PublicationsConsumer {
         streams.start();
 
         // Add shutdown hook to respond to SIGTERM and gracefully close Kafka Streams
-        FileWriter finalFw = fw;
         Runtime.getRuntime().addShutdownHook(new Thread( () -> {
             try {
-                finalFw.flush();
-                finalFw.close();
+                System.out.println("Shutting down kafka consumer");
+                fw.close();
                 streams.close();
             } catch (IOException e) {
                 e.printStackTrace();
@@ -84,15 +87,13 @@ public class PublicationsConsumer {
             e.printStackTrace();
         }
         FileWriter finalFw = fw;
-        geometryStream.foreach(new ForeachAction<String, String>() {
-            @Override
-            public void apply(String s, String s2) {
-                try {
-                    finalFw.append(s + ": avgProcTime " + s2 + "\n");
-                    System.out.println(s);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+        geometryStream.foreach((s, s2) -> {
+            try {
+                finalFw.append(s + ": avgProcTime " + s2 + "\n");
+                finalFw.flush();
+                System.out.println(s);
+            } catch (IOException e) {
+                e.printStackTrace();
             }
         });
 
